@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIT SPIN — Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #070707; --surface: #111; --surface2: #181818;
+      --border: rgba(255,255,255,.07); --text: #e5e5e5;
+      --muted: rgba(255,255,255,.38); --accent: #fee440;
+      --green: #00f5d4; --red: #ff5c5c;
+      --radius: 14px;
+    }
+
+    html { background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px; line-height: 1.5; }
+
+    body { min-height: 100vh; padding-bottom: 60px; }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(7,7,7,.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; height: 56px;
+    }
+
+    .nav-logo {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 22px; letter-spacing: 4px;
+      background: linear-gradient(135deg, #ff3cac, #ff6b35, #fee440);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-right { display: flex; gap: 10px; align-items: center; }
+
+    .btn-sm {
+      font-family: inherit; font-size: 12px; font-weight: 600;
+      letter-spacing: 1px; padding: 7px 14px;
+      border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface2); color: var(--muted);
+      cursor: pointer; transition: all .15s; white-space: nowrap;
+    }
+    .btn-sm:hover { background: rgba(255,255,255,.06); color: var(--text); }
+    .btn-sm.primary { background: var(--accent); color: #000;
+      border-color: transparent; font-weight: 700; }
+    .btn-sm.danger  { color: var(--red); border-color: rgba(255,92,92,.25); }
+    .btn-sm.danger:hover { background: rgba(255,92,92,.08); }
+
+    /* ── PAGE LAYOUT ── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 28px 16px; }
+
+    /* ── WIFI CARD ── */
+    .wifi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px; margin-bottom: 28px;
+      display: flex; flex-wrap: wrap; gap: 20px;
+      align-items: center;
+    }
+
+    .wifi-icon { font-size: 28px; flex-shrink: 0; }
+
+    .wifi-info { flex: 1; min-width: 200px; }
+    .wifi-label { font-size: 10px; letter-spacing: 2px; color: var(--muted);
+      text-transform: uppercase; margin-bottom: 2px; }
+    .wifi-value { font-family: 'Courier New', monospace; font-size: 15px;
+      color: var(--accent); }
+
+    .wifi-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+
+    .wifi-edit-form {
+      display: none; width: 100%; border-top: 1px solid var(--border);
+      margin-top: 16px; padding-top: 16px; gap: 12px;
+    }
+    .wifi-edit-form.open { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 140px; }
+    .field label { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+    .field input {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: 'Courier New', monospace;
+      font-size: 14px; padding: 8px 12px; outline: none;
+      transition: border-color .15s;
+    }
+    .field input:focus { border-color: var(--accent); }
+
+    /* ── COLUMNS GRID ── */
+    .section-title {
+      font-family: Impact, sans-serif; font-size: 11px;
+      letter-spacing: 3px; color: var(--muted); text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .columns-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    /* ── COLUMN CARD ── */
+    .col-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+
+    .col-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .col-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: Impact, sans-serif; font-size: 14px;
+      font-weight: bold; flex-shrink: 0;
+    }
+
+    .col-label-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 17px; letter-spacing: 2px;
+      border-bottom: 1px solid transparent;
+      transition: border-color .2s; padding: 2px 0;
+    }
+    .col-label-input:focus { border-bottom-color: var(--border); }
+
+    .col-count {
+      font-family: 'Courier New', monospace; font-size: 11px;
+      background: rgba(255,255,255,.05); border-radius: 20px;
+      padding: 2px 8px; color: var(--muted); flex-shrink: 0;
+    }
+
+    /* Exercise list */
+    .exercise-list {
+      flex: 1; overflow-y: auto; max-height: 220px;
+      padding: 10px 0;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.1) transparent;
+    }
+
+    .exercise-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.03);
+      transition: background .12s;
+    }
+    .exercise-item:hover { background: rgba(255,255,255,.02); }
+    .exercise-item:last-child { border-bottom: none; }
+
+    .ex-emoji { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+    .ex-info  { flex: 1; min-width: 0; }
+    .ex-name  { font-size: 13px; font-weight: 600; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; }
+    .ex-reps  { font-family: 'Courier New', monospace; font-size: 11px;
+      color: var(--muted); }
+
+    .ex-delete {
+      background: none; border: none; color: rgba(255,92,92,.4);
+      cursor: pointer; font-size: 16px; padding: 2px 6px;
+      border-radius: 4px; transition: color .15s; flex-shrink: 0;
+    }
+    .ex-delete:hover { color: var(--red); }
+
+    .empty-state {
+      padding: 30px 16px; text-align: center;
+      color: var(--muted); font-size: 13px; line-height: 1.6;
+    }
+
+    /* Add exercise form */
+    .add-form {
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+
+    .add-form input {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 13px;
+      padding: 7px 10px; outline: none; transition: border-color .15s;
+    }
+    .add-form input:focus { border-color: rgba(255,255,255,.18); }
+    .add-form .in-name { flex: 2; min-width: 100px; }
+    .add-form .in-emoji { width: 56px; text-align: center; }
+    .add-form .in-reps  { flex: 1; min-width: 72px; }
+
+    .add-form .btn-add {
+      background: rgba(255,255,255,.05); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 13px;
+      padding: 7px 12px; cursor: pointer; white-space: nowrap;
+      transition: background .15s;
+    }
+    .add-form .btn-add:hover { background: rgba(255,255,255,.09); }
+
+    /* Col actions */
+    .col-actions {
+      border-top: 1px solid var(--border);
+      display: flex; gap: 0;
+    }
+
+    .col-action-btn {
+      flex: 1; background: none; border: none; border-right: 1px solid var(--border);
+      color: var(--muted); font-size: 12px; letter-spacing: 1px;
+      padding: 11px 6px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; gap: 5px;
+      transition: background .15s, color .15s; font-family: inherit;
+    }
+    .col-action-btn:last-child { border-right: none; }
+    .col-action-btn:hover { background: rgba(255,255,255,.04); color: var(--text); }
+    .col-action-btn .icon { font-size: 14px; }
+
+    input[type=file] { display: none; }
+
+    /* ── STATUS TOAST ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 30px; padding: 10px 22px;
+      font-size: 13px; letter-spacing: 1px; color: var(--text);
+      opacity: 0; transition: all .3s cubic-bezier(.34,1.56,.64,1);
+      white-space: nowrap; z-index: 200;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.ok   { border-color: var(--green); color: var(--green); }
+    #toast.err  { border-color: var(--red);   color: var(--red); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      .wifi-card { padding: 16px; }
+      .col-header { padding: 12px 14px; }
+      .exercise-item { padding: 7px 14px; }
+      .add-form { padding: 10px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">FIT SPIN</div>
+  <div class="nav-right">
+    <button class="btn-sm danger" id="reset-all-btn">↺ Reset Defaults</button>
+    <a href="/" class="btn-sm primary">← Kiosk</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- WiFi -->
+  <div class="wifi-card" id="wifi-card">
+    <div class="wifi-icon">📶</div>
+    <div class="wifi-info">
+      <div class="wifi-label">Network (SSID)</div>
+      <div class="wifi-value" id="wifi-ssid">Loading…</div>
+    </div>
+    <div class="wifi-info">
+      <div class="wifi-label">Password</div>
+      <div class="wifi-value" id="wifi-pass">Loading…</div>
+    </div>
+    <div class="wifi-info">
+      <div class="wifi-label">Admin URL</div>
+      <div class="wifi-value" id="wifi-ip">Loading…</div>
+    </div>
+    <div class="wifi-actions">
+      <button class="btn-sm" id="wifi-edit-btn">✏️ Edit</button>
+    </div>
+    <form class="wifi-edit-form" id="wifi-form" onsubmit="return false">
+      <div class="field">
+        <label>SSID</label>
+        <input id="wifi-ssid-in" type="text" maxlength="32" placeholder="FITSPIN-ADMIN">
+      </div>
+      <div class="field">
+        <label>Password (min 8 chars)</label>
+        <input id="wifi-pass-in" type="text" maxlength="63" placeholder="FitSpin2024">
+      </div>
+      <button class="btn-sm primary" id="wifi-save-btn" style="align-self:flex-end">Save & Apply</button>
+      <button class="btn-sm" id="wifi-cancel-btn" style="align-self:flex-end">Cancel</button>
+    </form>
+  </div>
+
+  <!-- Columns -->
+  <div class="section-title">Exercise Columns</div>
+  <div class="columns-grid" id="columns-grid">
+    <div style="color:rgba(255,255,255,.3);font-size:13px">Loading…</div>
+  </div>
+</div>
+
+<!-- Hidden file inputs (one per column) -->
+<input type="file" id="csv-0" accept=".csv">
+<input type="file" id="csv-1" accept=".csv">
+<input type="file" id="csv-2" accept=".csv">
+<input type="file" id="csv-3" accept=".csv">
+<input type="file" id="csv-4" accept=".csv">
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  FIT SPIN — Admin Portal
+// ══════════════════════════════════════════════════════════════
+
+let data = [];  // [{label, color, exercises[]}, …] × 5
+
+// ── TOAST ─────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 3000);
+}
+
+// ── API HELPERS ───────────────────────────────────────────────
+async function api(url, opts = {}) {
+  const r = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts
+  });
+  return r.json();
+}
+
+// ── WIFI ──────────────────────────────────────────────────────
+async function loadWifi() {
+  try {
+    const w = await api('/api/wifi');
+    document.getElementById('wifi-ssid').textContent = w.ssid;
+    document.getElementById('wifi-pass').textContent = w.password;
+    document.getElementById('wifi-ip').textContent   = `http://${w.ip}/admin`;
+    document.getElementById('wifi-ssid-in').value    = w.ssid;
+    document.getElementById('wifi-pass-in').value    = w.password;
+  } catch (e) {
+    document.getElementById('wifi-ssid').textContent = 'Unavailable';
+  }
+}
+
+document.getElementById('wifi-edit-btn').addEventListener('click', () => {
+  document.getElementById('wifi-form').classList.add('open');
+  document.getElementById('wifi-edit-btn').style.display = 'none';
+});
+document.getElementById('wifi-cancel-btn').addEventListener('click', () => {
+  document.getElementById('wifi-form').classList.remove('open');
+  document.getElementById('wifi-edit-btn').style.display = '';
+});
+document.getElementById('wifi-save-btn').addEventListener('click', async () => {
+  const ssid = document.getElementById('wifi-ssid-in').value.trim();
+  const pass = document.getElementById('wifi-pass-in').value.trim();
+  if (!ssid || pass.length < 8) {
+    toast('SSID required, password ≥ 8 chars', 'err'); return;
+  }
+  const r = await api('/api/wifi', {
+    method: 'POST', body: JSON.stringify({ ssid, password: pass })
+  });
+  if (r.ok) {
+    toast('✓ WiFi updated — reconnect with new credentials');
+    document.getElementById('wifi-form').classList.remove('open');
+    document.getElementById('wifi-edit-btn').style.display = '';
+    loadWifi();
+  } else {
+    toast(r.error || 'Failed to update WiFi', 'err');
+  }
+});
+
+// ── COLUMNS ───────────────────────────────────────────────────
+async function loadColumns() {
+  try {
+    data = await api('/api/exercises');
+    renderColumns();
+  } catch (e) {
+    document.getElementById('columns-grid').innerHTML =
+      '<div style="color:var(--red)">Could not load exercises</div>';
+  }
+}
+
+function renderColumns() {
+  const grid = document.getElementById('columns-grid');
+  grid.innerHTML = '';
+
+  data.forEach((col, i) => {
+    const card = document.createElement('div');
+    card.className = 'col-card';
+    card.dataset.col = i;
+
+    // Header
+    const hdr = document.createElement('div');
+    hdr.className = 'col-header';
+    hdr.innerHTML = `
+      <div class="col-num" style="background:${col.color}22;color:${col.color}">${i+1}</div>
+      <input class="col-label-input" data-col="${i}" value="${escHtml(col.label)}"
+        maxlength="30" style="color:${col.color}" title="Click to rename column">
+      <span class="col-count" id="count-${i}">${col.exercises.length} exercises</span>`;
+    card.appendChild(hdr);
+
+    // Exercise list
+    const list = document.createElement('div');
+    list.className = 'exercise-list';
+    list.id = `list-${i}`;
+    renderExerciseList(list, col.exercises, i);
+    card.appendChild(list);
+
+    // Add exercise form
+    const addForm = document.createElement('div');
+    addForm.className = 'add-form';
+    addForm.innerHTML = `
+      <input class="in-emoji" type="text" placeholder="💪" maxlength="4" data-field="emoji">
+      <input class="in-name" type="text" placeholder="Exercise name" maxlength="40" data-field="name">
+      <input class="in-reps" type="text" placeholder="15 reps" maxlength="20" data-field="reps">
+      <button class="btn-add" data-col="${i}">+ Add</button>`;
+    card.appendChild(addForm);
+
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'col-actions';
+    actions.innerHTML = `
+      <button class="col-action-btn" data-action="upload" data-col="${i}">
+        <span class="icon">📁</span> Upload CSV
+      </button>
+      <button class="col-action-btn" data-action="download" data-col="${i}">
+        <span class="icon">⬇</span> Download CSV
+      </button>`;
+    card.appendChild(actions);
+
+    grid.appendChild(card);
+  });
+
+  bindEvents();
+}
+
+function renderExerciseList(el, exercises, colIdx) {
+  el.innerHTML = '';
+  if (!exercises.length) {
+    el.innerHTML = `<div class="empty-state">No exercises yet.<br>Upload a CSV or add one below.</div>`;
+    return;
+  }
+  exercises.forEach((ex, j) => {
+    const row = document.createElement('div');
+    row.className = 'exercise-item';
+    row.innerHTML = `
+      <div class="ex-emoji">${ex.emoji || '💪'}</div>
+      <div class="ex-info">
+        <div class="ex-name">${escHtml(ex.name)}</div>
+        ${ex.reps ? `<div class="ex-reps">${escHtml(ex.reps)}</div>` : ''}
+      </div>
+      <button class="ex-delete" data-col="${colIdx}" data-idx="${j}" title="Remove">×</button>`;
+    el.appendChild(row);
+  });
+}
+
+function refreshColumn(colIdx) {
+  const col = data[colIdx];
+  const listEl = document.getElementById(`list-${colIdx}`);
+  renderExerciseList(listEl, col.exercises, colIdx);
+  document.getElementById(`count-${colIdx}`).textContent = `${col.exercises.length} exercises`;
+}
+
+function bindEvents() {
+  // Label edit
+  document.querySelectorAll('.col-label-input').forEach(input => {
+    input.addEventListener('blur', async () => {
+      const col = +input.dataset.col;
+      const label = input.value.trim() || `Column ${col+1}`;
+      input.value = label;
+      data[col].label = label;
+      const r = await api(`/api/column/${col}`, {
+        method: 'POST', body: JSON.stringify({ label })
+      });
+      if (r.ok) toast(`✓ Column ${col+1} label saved`);
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') input.blur();
+    });
+  });
+
+  // Delete exercise
+  document.querySelectorAll('.ex-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const col = +btn.dataset.col;
+      const idx = +btn.dataset.idx;
+      data[col].exercises.splice(idx, 1);
+      refreshColumn(col);
+      await api(`/api/column/${col}`, {
+        method: 'POST', body: JSON.stringify({ exercises: data[col].exercises })
+      });
+    });
+  });
+
+  // Add exercise
+  document.querySelectorAll('.btn-add').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const col = +btn.dataset.col;
+      const form = btn.closest('.add-form');
+      const name  = form.querySelector('[data-field=name]').value.trim();
+      const emoji = form.querySelector('[data-field=emoji]').value.trim() || '💪';
+      const reps  = form.querySelector('[data-field=reps]').value.trim();
+      if (!name) { toast('Enter an exercise name', 'err'); return; }
+      data[col].exercises.push({ name, emoji, reps, image: '' });
+      refreshColumn(col);
+      const r = await api(`/api/column/${col}`, {
+        method: 'POST', body: JSON.stringify({ exercises: data[col].exercises })
+      });
+      if (r.ok) {
+        form.querySelector('[data-field=name]').value  = '';
+        form.querySelector('[data-field=emoji]').value = '';
+        form.querySelector('[data-field=reps]').value  = '';
+        toast(`✓ Added to Column ${col+1}`);
+      }
+    });
+  });
+
+  // Upload / Download
+  document.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const col = +btn.dataset.col;
+      if (btn.dataset.action === 'upload') {
+        document.getElementById(`csv-${col}`).click();
+      } else {
+        window.location.href = `/api/column/${col}/download`;
+      }
+    });
+  });
+}
+
+// CSV upload handlers
+for (let i = 0; i < 5; i++) {
+  document.getElementById(`csv-${i}`).addEventListener('change', async function() {
+    const file = this.files[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('file', file);
+    this.value = '';
+    try {
+      const r = await fetch(`/api/column/${i}/upload`, { method: 'POST', body: fd });
+      const res = await r.json();
+      if (res.ok) {
+        toast(`✓ Column ${i+1} updated — ${res.count} exercises loaded`);
+        data = await api('/api/exercises');
+        renderColumns();
+      } else {
+        toast(res.error || 'Upload failed', 'err');
+      }
+    } catch(e) {
+      toast('Upload error', 'err');
+    }
+  });
+}
+
+// Reset all
+document.getElementById('reset-all-btn').addEventListener('click', async () => {
+  if (!confirm('Reset ALL columns to default exercises?')) return;
+  const r = await api('/api/reset', { method: 'POST' });
+  if (r.ok) {
+    toast('✓ Reset to defaults');
+    data = await api('/api/exercises');
+    renderColumns();
+  }
+});
+
+// ── UTILS ─────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+loadWifi();
+loadColumns();
+</script>
+</body>
+</html>
