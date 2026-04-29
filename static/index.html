@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>FIT SPIN</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0;
+      -webkit-tap-highlight-color: transparent; user-select: none;
+      -webkit-user-select: none; touch-action: manipulation; }
+
+    :root { --card-h: 160px; }
+
+    html, body { width: 100%; height: 100%; overflow: hidden;
+      background: #050505; color: #fff; cursor: none; }
+
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+      background-size: 44px 44px; pointer-events: none; z-index: 0;
+    }
+
+    #app {
+      position: relative; z-index: 1;
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: space-between;
+      padding: clamp(8px,1.8vh,16px) clamp(8px,1.5vw,18px) clamp(10px,2vh,18px);
+    }
+
+    /* ── HEADER ── */
+    #header { text-align: center; flex-shrink: 0; }
+
+    #title {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: clamp(26px, 5.5vw, 56px);
+      letter-spacing: clamp(4px, 1vw, 8px);
+      background: linear-gradient(135deg, #ff3cac, #ff6b35, #fee440);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; line-height: 1; cursor: pointer;
+    }
+
+    #subtitle {
+      font-family: 'Courier New', monospace;
+      font-size: clamp(6px, 1vw, 9px);
+      letter-spacing: clamp(2px, 0.7vw, 4px);
+      color: rgba(255,255,255,.3); margin-top: 2px;
+    }
+
+    /* ── REELS AREA ── */
+    #reels-outer { display: flex; flex-direction: column; align-items: center;
+      flex: 1; min-height: 0; justify-content: center; width: 100%; }
+
+    #col-labels {
+      display: flex; gap: clamp(4px, 1vw, 10px);
+      width: 100%; justify-content: center;
+      margin-bottom: clamp(3px, 0.6vh, 7px);
+    }
+
+    .col-label {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: clamp(11px, 1.8vw, 16px);
+      letter-spacing: 1.5px; text-align: center; text-transform: uppercase;
+      width: clamp(92px, 17.5vw, 138px);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      padding: 0 2px; flex-shrink: 0;
+    }
+
+    #reels-container {
+      display: flex; gap: clamp(4px, 1vw, 10px);
+      align-items: center; justify-content: center;
+    }
+
+    .reel-viewport {
+      width: clamp(92px, 17.5vw, 138px);
+      height: var(--card-h);
+      overflow: hidden;
+      border-radius: clamp(8px, 1.2vw, 14px);
+      background: #0e0e0e;
+      border: 1px solid rgba(255,255,255,.06);
+      position: relative;
+      box-shadow: inset 0 0 28px rgba(0,0,0,.9), 0 3px 18px rgba(0,0,0,.7);
+      flex-shrink: 0;
+    }
+
+    .reel-viewport::before, .reel-viewport::after {
+      content: ''; position: absolute; left: 0; right: 0; height: 36%;
+      z-index: 2; pointer-events: none;
+    }
+    .reel-viewport::before { top: 0;
+      background: linear-gradient(to bottom, rgba(5,5,5,.95), transparent); }
+    .reel-viewport::after  { bottom: 0;
+      background: linear-gradient(to top, rgba(5,5,5,.95), transparent); }
+
+    .reel-highlight {
+      position: absolute; left: 4px; right: 4px;
+      top: 50%; transform: translateY(-50%);
+      height: calc(var(--card-h) - 8px);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 8px; z-index: 3; pointer-events: none;
+    }
+
+    .reel-strip { position: absolute; left: 0; right: 0; top: 0;
+      will-change: transform; }
+
+    .reel-card {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: clamp(2px, 0.4vh, 4px); padding: 5px 3px;
+    }
+
+    .card-emoji { font-size: clamp(26px, 5vw, 44px); line-height: 1;
+      filter: drop-shadow(0 0 5px rgba(255,255,255,.2)); }
+
+    .card-img { width: clamp(38px, 6.5vw, 56px); height: clamp(38px, 6.5vw, 56px);
+      object-fit: cover; border-radius: 7px; }
+
+    .card-name {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: clamp(8px, 1.4vw, 12px); letter-spacing: .8px;
+      text-align: center; line-height: 1.15; max-width: 90%;
+      overflow: hidden; display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    }
+
+    .card-reps { font-family: 'Courier New', monospace;
+      font-size: clamp(6px, 1vw, 9px); color: rgba(255,255,255,.4); letter-spacing: .4px; }
+
+    /* ── BOTTOM ── */
+    #bottom-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: clamp(10px, 2.5vw, 28px); flex-shrink: 0; width: 100%;
+    }
+
+    #exercise-info {
+      font-family: 'Courier New', monospace;
+      font-size: clamp(7px, 1vw, 10px);
+      color: rgba(255,255,255,.22); letter-spacing: 2px;
+      text-align: right; flex-shrink: 0; min-width: clamp(60px, 8vw, 100px);
+    }
+
+    #spin-btn {
+      width: clamp(100px, 18vw, 160px); height: clamp(100px, 18vw, 160px);
+      border-radius: 50%; border: none;
+      background: linear-gradient(135deg, #ff3cac, #ff6b35, #fee440);
+      color: #000; cursor: pointer;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 2px;
+      box-shadow: 0 0 36px rgba(255,60,172,.35), 0 5px 20px rgba(0,0,0,.7);
+      transition: transform .1s ease, box-shadow .1s ease;
+      position: relative; flex-shrink: 0;
+    }
+    #spin-btn::after {
+      content: ''; position: absolute; inset: -3px; border-radius: 50%;
+      background: inherit; z-index: -1; opacity: .2; filter: blur(9px);
+    }
+    #spin-btn:active:not(:disabled) {
+      transform: scale(.9);
+      box-shadow: 0 0 16px rgba(255,60,172,.25), 0 2px 8px rgba(0,0,0,.7);
+    }
+    #spin-btn:disabled { background: #1a1a1a; color: #2e2e2e;
+      box-shadow: none; cursor: default; }
+    #spin-btn:disabled::after { display: none; }
+
+    .btn-icon  { font-size: clamp(22px, 4.5vw, 38px); line-height: 1; }
+    .btn-label { font-family: Impact, sans-serif;
+      font-size: clamp(16px, 3vw, 28px); letter-spacing: clamp(3px, .8vw, 5px); }
+
+    /* ── JACKPOT ── */
+    #jackpot {
+      position: fixed; inset: 0; background: rgba(0,0,0,.8);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 20; opacity: 0; pointer-events: none; transition: opacity .3s;
+    }
+    #jackpot.visible { opacity: 1; pointer-events: auto; }
+    #jackpot-text {
+      font-family: Impact, sans-serif;
+      font-size: clamp(38px, 10vw, 80px); letter-spacing: clamp(3px, 1vw, 7px);
+      background: linear-gradient(135deg, #fee440, #ff6b35, #ff3cac);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; text-align: center;
+      animation: jpulse .5s ease-in-out infinite alternate;
+    }
+    #jackpot-sub { font-family: 'Courier New', monospace;
+      font-size: clamp(8px,1.4vw,12px); letter-spacing: 3px;
+      color: rgba(255,255,255,.35); text-align: center; margin-top: 8px; }
+    @keyframes jpulse { from{transform:scale(1)} to{transform:scale(1.07)} }
+
+    /* ── LOADING ── */
+    #loading {
+      position: fixed; inset: 0; background: #050505;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; z-index: 50; transition: opacity .4s;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    .loader-title { font-family: Impact, sans-serif; font-size: 42px;
+      letter-spacing: 6px; background: linear-gradient(135deg,#ff3cac,#ff6b35,#fee440);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; }
+    .loader-dots { font-family: 'Courier New', monospace;
+      font-size: 11px; letter-spacing: 4px; color: rgba(255,255,255,.35);
+      animation: blink 1.2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:.3} 50%{opacity:1} }
+  </style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loading">
+  <div class="loader-title">FIT SPIN</div>
+  <div class="loader-dots">LOADING...</div>
+</div>
+
+<div id="app">
+  <div id="header">
+    <div id="title">FIT SPIN</div>
+    <div id="subtitle">WORKOUT RANDOMIZER</div>
+  </div>
+
+  <div id="reels-outer">
+    <div id="col-labels"></div>
+    <div id="reels-container"></div>
+  </div>
+
+  <div id="bottom-row">
+    <div id="exercise-info">—</div>
+    <button id="spin-btn" disabled>
+      <span class="btn-icon">⚡</span>
+      <span class="btn-label">SPIN</span>
+    </button>
+    <div style="min-width:clamp(60px,8vw,100px)"></div>
+  </div>
+</div>
+
+<!-- Jackpot -->
+<div id="jackpot">
+  <div>
+    <div id="jackpot-text">🎰 JACKPOT! 🎰</div>
+    <div id="jackpot-sub">TAP TO CONTINUE</div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  FIT SPIN  –  5-Reel Kiosk  –  Raspberry Pi / Offline
+// ══════════════════════════════════════════════════════════════
+
+const REPEATS      = 40;
+const REEL_DELAYS  = [0, 200, 400, 600, 800];   // ms stagger per reel
+const REEL_DUR     = 1800;                        // base spin duration (ms)
+
+// Dynamic card height based on viewport
+const CARD_H = (() => {
+  const h = window.innerHeight;
+  if (h < 420) return 100;
+  if (h < 520) return 120;
+  if (h < 620) return 140;
+  return 160;
+})();
+document.documentElement.style.setProperty('--card-h', CARD_H + 'px');
+
+// ── STATE ─────────────────────────────────────────────────────
+let columns  = [];   // [{label, color, exercises[]}, …] × 5
+let reels    = [];   // Reel instances
+let spinning = false;
+
+// ── REEL ─────────────────────────────────────────────────────
+class Reel {
+  constructor(vp, exercises, color) {
+    this.vp    = vp;
+    this.strip = vp.querySelector('.reel-strip');
+    this.ex    = exercises;
+    this.color = color;
+    this.raf   = null;
+    this.curIdx = 0;
+    this.offsetY = 0;
+    this._build();
+  }
+
+  _build() {
+    const { strip, ex, color } = this;
+    strip.innerHTML = '';
+    for (let r = 0; r < REPEATS; r++) {
+      for (const e of ex) {
+        const card = document.createElement('div');
+        card.className = 'reel-card';
+        card.style.height = CARD_H + 'px';
+
+        if (e.image) {
+          const img = document.createElement('img');
+          img.className = 'card-img';
+          img.src = e.image; img.alt = e.name;
+          const fb = document.createElement('div');
+          fb.className = 'card-emoji'; fb.textContent = e.emoji || '💪';
+          fb.style.display = 'none';
+          img.onerror = () => { img.style.display='none'; fb.style.display=''; };
+          card.appendChild(img); card.appendChild(fb);
+        } else {
+          const em = document.createElement('div');
+          em.className = 'card-emoji'; em.textContent = e.emoji || '💪';
+          card.appendChild(em);
+        }
+
+        const nm = document.createElement('div');
+        nm.className = 'card-name';
+        nm.textContent = e.name;
+        nm.style.color = color;
+        nm.style.textShadow = `0 0 7px ${color}44`;
+        card.appendChild(nm);
+
+        if (e.reps) {
+          const rp = document.createElement('div');
+          rp.className = 'card-reps'; rp.textContent = e.reps;
+          card.appendChild(rp);
+        }
+        strip.appendChild(card);
+      }
+    }
+    // Start mid-strip
+    const mid = Math.floor(REPEATS / 2);
+    this.offsetY = -(mid * ex.length * CARD_H);
+    this.curIdx  = 0;
+    strip.style.transform = `translateY(${this.offsetY}px)`;
+  }
+
+  rebuild(exercises, color) {
+    if (this.raf) { cancelAnimationFrame(this.raf); this.raf = null; }
+    this.ex = exercises; this.color = color;
+    this._build();
+  }
+
+  spin(targetIdx, delay, onDone) {
+    if (this.raf) { cancelAnimationFrame(this.raf); this.raf = null; }
+    const N        = this.ex.length;
+    const startY   = this.offsetY;
+    const steps    = ((targetIdx - this.curIdx + N) % N || N) + (4 + Math.floor(Math.random()*3)) * N;
+    const endY     = startY - steps * CARD_H;
+    const mid      = Math.floor(REPEATS / 2);
+    const normY    = -(mid * N + targetIdx) * CARD_H;
+    const t0       = performance.now() + delay;
+    const t1       = t0 + REEL_DUR;
+    const ease     = t => 1 - Math.pow(1 - t, 5);
+
+    const frame = now => {
+      if (now < t0) { this.raf = requestAnimationFrame(frame); return; }
+      const p = Math.min((now - t0) / REEL_DUR, 1);
+      this.strip.style.transform = `translateY(${startY + (endY - startY) * ease(p)}px)`;
+      if (p < 1) {
+        this.raf = requestAnimationFrame(frame);
+      } else {
+        this.strip.style.transform = `translateY(${normY}px)`;
+        this.offsetY = normY; this.curIdx = targetIdx; this.raf = null;
+        if (onDone) onDone();
+      }
+    };
+    this.raf = requestAnimationFrame(frame);
+  }
+}
+
+// ── BUILD DOM ─────────────────────────────────────────────────
+function buildDOM() {
+  const labelsEl = document.getElementById('col-labels');
+  const reelsEl  = document.getElementById('reels-container');
+  labelsEl.innerHTML = '';
+  reelsEl.innerHTML  = '';
+  reels = [];
+
+  columns.forEach((col, i) => {
+    // Label
+    const lbl = document.createElement('div');
+    lbl.className = 'col-label';
+    lbl.textContent = col.label;
+    lbl.style.color = col.color;
+    labelsEl.appendChild(lbl);
+
+    // Viewport
+    const vp = document.createElement('div');
+    vp.className = 'reel-viewport';
+    const strip = document.createElement('div');
+    strip.className = 'reel-strip';
+    const hl = document.createElement('div');
+    hl.className = 'reel-highlight';
+    vp.appendChild(strip); vp.appendChild(hl);
+    reelsEl.appendChild(vp);
+
+    reels.push(new Reel(vp, col.exercises, col.color));
+  });
+
+  updateInfo();
+}
+
+function updateInfo() {
+  const counts = columns.map(c => c.exercises.length);
+  document.getElementById('exercise-info').textContent =
+    counts.join(' · ') + '\nEXERCISES';
+}
+
+// ── FETCH WITH RETRY ──────────────────────────────────────────
+function fetchExercises(attempt) {
+  fetch('/api/exercises')
+    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    .then(data => {
+      columns = data;
+      buildDOM();
+      document.getElementById('spin-btn').disabled = false;
+      const loading = document.getElementById('loading');
+      loading.classList.add('hidden');
+      setTimeout(() => loading.style.display = 'none', 450);
+    })
+    .catch(() => {
+      // Retry — server may still be starting on boot
+      const delay = Math.min(800 * (attempt || 1), 4000);
+      setTimeout(() => fetchExercises((attempt || 1) + 1), delay);
+    });
+}
+
+// ── SPIN ──────────────────────────────────────────────────────
+function doSpin() {
+  if (spinning || !columns.length) return;
+  spinning = true;
+
+  const btn = document.getElementById('spin-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-label" style="font-size:.6em;letter-spacing:2px">SPINNING</span>';
+
+  document.getElementById('jackpot').classList.remove('visible');
+
+  const picks = columns.map(col =>
+    Math.floor(Math.random() * col.exercises.length)
+  );
+
+  let done = 0;
+  picks.forEach((idx, i) => {
+    reels[i].spin(idx, REEL_DELAYS[i], () => {
+      done++;
+      if (done === 5) finishSpin(picks);
+    });
+  });
+}
+
+function finishSpin(picks) {
+  spinning = false;
+  const btn = document.getElementById('spin-btn');
+  btn.disabled = false;
+  btn.innerHTML = '<span class="btn-icon">⚡</span><span class="btn-label">SPIN</span>';
+
+  if (new Set(picks.map((idx, i) => columns[i].exercises[idx].name)).size === 1)
+    setTimeout(showJackpot, 500);
+}
+
+function showJackpot() {
+  document.getElementById('jackpot').classList.add('visible');
+}
+
+// ── ADMIN TRIGGER  (5 quick taps on title) ───────────────────
+let tapCount = 0, tapTimer;
+document.getElementById('title').addEventListener('click', () => {
+  clearTimeout(tapTimer);
+  if (++tapCount >= 5) { tapCount = 0; window.location.href = '/admin'; }
+  else tapTimer = setTimeout(() => tapCount = 0, 2000);
+});
+
+// ── EVENTS ────────────────────────────────────────────────────
+document.getElementById('spin-btn').addEventListener('click', doSpin);
+document.getElementById('jackpot').addEventListener('click', () =>
+  document.getElementById('jackpot').classList.remove('visible'));
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.key === 'Enter') { e.preventDefault(); doSpin(); }
+});
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// ── BOOT ──────────────────────────────────────────────────────
+fetchExercises(1);
+</script>
+</body>
+</html>
